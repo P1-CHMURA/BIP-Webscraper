@@ -1,0 +1,5 @@
+docker build --file differ_redis.Dockerfile -t differ_redis .
+docker run -p 5011:6379 --name differ_redis differ_redis
+
+sudo docker build --file differ_worker.Dockerfile -t differ_worker ..
+sudo docker run --name differ_worker --network="host" differ_worker
