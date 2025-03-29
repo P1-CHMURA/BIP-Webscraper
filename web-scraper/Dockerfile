@@ -24,9 +24,10 @@ ENV FLASK_ENV=development
 ENV FLASK_DEBUG=1
 # Expose port for Flask
 EXPOSE 5000
+EXPOSE 6379
 
 # Command to run the Flask app (Flask web server)
 
 
 # Start Redis server in the background, and then Flask and Celery
-CMD redis-server & flask run --host=0.0.0.0
+CMD redis-server & flask run --host=0.0.0.0 --port=5000

@@ -9,7 +9,7 @@ def make_celery(app):
 
     # RedBeat setup
     celery.conf.update(
-        redbeat_redis_url="redis://redis_S:6379/0",
+        redbeat_redis_url="redis://redis:6379/0",
     )
     class ContextTask(celery.Task):
         def __call__(self, *args, **kwargs):

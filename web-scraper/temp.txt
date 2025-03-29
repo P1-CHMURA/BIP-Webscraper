@@ -8,4 +8,4 @@ flask run
 
 
 
-curl -X POST "http://localhost:5000/scrape" -H "Content-Type: application/json" -d "{\"url\": \"https://bip.malopolska.pl/umtarnow\", \"schedule_time\": 5, \"interval\": \"MIN\"}"
+curl -X POST "http://localhost:5000/scrape" -H "Content-Type: application/json" -d "{\"url\": \"https://bip.malopolska.pl/umtarnow\", \"schedule_time\": 1, \"interval\": \"MIN\"}"

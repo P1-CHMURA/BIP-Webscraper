@@ -1,18 +1,10 @@
+version: '3.8'
 services:
-  redis_S:
+  redis:
     image: redis
-    container_name: redisTT
+    container_name: redis
     ports:
-    - "6379:6379"
-  redis-commander:
-    container_name: redis-commander
-    hostname: redis-commander
-    image: rediscommander/redis-commander:latest
-    restart: always
-    environment:
-    - REDIS_HOSTS=local:redis_S:6379
-    ports:
-    - "8081:8081"
+      - "6379:6379"
   ocr-app:
     build:
       context: .
@@ -21,39 +13,36 @@ services:
     environment:
       - FLASK_APP=run
       - FLASK_ENV=development
+      - FLASK_DEBUG=1
     volumes:
       - .:/app
     ports:
       - "5000:5000"
     depends_on:
-      - redis_S
+      - redis
     networks:
       - app-network
   celery-worker:
     container_name: celery-worker
     build: .
-    environment:
-      - FLASK_APP=run
-      - FLASK_ENV=development
     depends_on:
-      - redis_S
+      - redis
     networks:
       - app-network
   celery-beat:
     container_name: celery-beat
     build: .
     environment:
-      - FLASK_APP=run
-      - FLASK_ENV=development
-      - CELERY_BROKER=redis://redis_S:6379/0
-      - CELERY_RESULT_BACKEND=redis://redis_S:6379/0
+      - CELERY_BROKER=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
       - CELERY_BEAT_SCHEDULE=redbeat.RedBeatScheduler
-      - REDBEAT_REDIS_URL=redis://redis_S:6379/0
+      - REDBEAT_REDIS_URL=redis://redis:6379/0
     depends_on:
-      - redis_S
+      - redis
       - celery-worker
     networks:
       - app-network
+
 networks:
   app-network:
     driver: bridge

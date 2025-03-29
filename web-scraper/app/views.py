@@ -13,10 +13,12 @@ main = Blueprint("main", __name__)
 @main.route("/scrape", methods=["POST"])
 def index():
     data = request.json
+
     url = data.get('url')
     schedule_time = data.get("schedule_time", 5)
     interval = get_time_interval(data.get("interval", "MINUTELY"))
     print(f"Scraping {url} schedule_time {schedule_time} interval {interval}")
+
     if not url:
         return jsonify({"error": "URL is required"}), 400
     if schedule_time == "Invalid interval":
@@ -26,6 +28,7 @@ def index():
     schedule_name = str(uuid4())
     dt = datetime.utcnow()
     interval = rrule(freq=str(interval),interval=schedule_time , dtstart=dt)
+
     entry = RedBeatSchedulerEntry(schedule_name,
         "app.tasks.my_task",
         interval,
@@ -34,8 +37,12 @@ def index():
         app=celery_app
     )
     entry.save()
-
+    return jsonify({"do": data}), 202
+    '''
     return jsonify({"task_id": schedule_name, "status": "queued", "Intervals":schedule_time}), 202
+    '''
+
+
 
 def get_time_interval(interval):
     match interval.upper():
