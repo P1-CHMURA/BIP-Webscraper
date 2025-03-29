@@ -1,0 +1,59 @@
+services:
+  redis_S:
+    image: redis
+    container_name: redisTT
+    ports:
+    - "6379:6379"
+  redis-commander:
+    container_name: redis-commander
+    hostname: redis-commander
+    image: rediscommander/redis-commander:latest
+    restart: always
+    environment:
+    - REDIS_HOSTS=local:redis_S:6379
+    ports:
+    - "8081:8081"
+  ocr-app:
+    build:
+      context: .
+    container_name: ocr-app
+    command: bash -c "flask run --host=0.0.0.0 --port=5000"
+    environment:
+      - FLASK_APP=run
+      - FLASK_ENV=development
+    volumes:
+      - .:/app
+    ports:
+      - "5000:5000"
+    depends_on:
+      - redis_S
+    networks:
+      - app-network
+  celery-worker:
+    container_name: celery-worker
+    build: .
+    environment:
+      - FLASK_APP=run
+      - FLASK_ENV=development
+    depends_on:
+      - redis_S
+    networks:
+      - app-network
+  celery-beat:
+    container_name: celery-beat
+    build: .
+    environment:
+      - FLASK_APP=run
+      - FLASK_ENV=development
+      - CELERY_BROKER=redis://redis_S:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis_S:6379/0
+      - CELERY_BEAT_SCHEDULE=redbeat.RedBeatScheduler
+      - REDBEAT_REDIS_URL=redis://redis_S:6379/0
+    depends_on:
+      - redis_S
+      - celery-worker
+    networks:
+      - app-network
+networks:
+  app-network:
+    driver: bridge
