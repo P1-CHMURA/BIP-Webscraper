@@ -37,10 +37,10 @@ def index():
         app=celery_app
     )
     entry.save()
-    return jsonify({"do": data}), 202
-    '''
+    #return jsonify({"do": data}), 202
+
     return jsonify({"task_id": schedule_name, "status": "queued", "Intervals":schedule_time}), 202
-    '''
+
 
 
 

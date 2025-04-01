@@ -1,7 +1,7 @@
 version: '3.8'
 services:
   redis:
-    image: redis
+    image: "redis:alpine"
     container_name: redis
     command: ["redis-server", "--bind", "0.0.0.0"]
     ports:
@@ -28,6 +28,7 @@ services:
   celery-worker:
     container_name: celery-worker
     build: .
+    command: bash -c "celery -A run.celery worker -l info --pool=solo"
     depends_on:
       - redis
     networks:
@@ -35,6 +36,7 @@ services:
   celery-beat:
     container_name: celery-beat
     build: .
+    command: bash -c "celery -A run.celery beat -S redbeat.RedBeatScheduler --max-interval 30 --loglevel=info"
     environment:
       - CELERY_BROKER=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/0

@@ -171,7 +171,7 @@ def extract_excel_to_json_text(excel_file):
     return json_text
 def send_results_to_api(results):
     """Send extracted results to the Flask API."""
-    api_url = "http://127.0.0.1:5001/receive_results"  # Change if needed
+    api_url = "http://resolts:5001/receive_results"  # Change if needed
     headers = {"Content-Type": "application/json"}
     print(results)
     try:
