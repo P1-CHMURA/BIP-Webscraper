@@ -1,13 +1,19 @@
-import { useState } from 'react'
 import './App.css'
 import Layout from './layout'
+import Home from './pages/Home'
+import Summary from './pages/Summary'
+import ManageBIPs from './pages/ManageBIPs'
+import { Routes, Route } from 'react-router-dom'
+
 function App() {
-
-
   return (
-    <>
-      <h1 className="text-[48px] text-navFont">Aplikacja do scrappowania BIP-ów</h1>  
-    </>
+    <Routes>
+      <Route path="/" element={<Layout />}>
+        <Route index element={<Home />} />
+        <Route path="/podsumowania" element={<Summary />} />
+        <Route path="/zarzadzaj" element={<ManageBIPs />} />
+      </Route>
+    </Routes>
   )
 }
 
