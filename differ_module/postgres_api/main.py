@@ -89,6 +89,27 @@ def delete_document(source_name, document_name):
             return jsonify({"message": f"Dokument '{document_name}' został usunięty."})
         return jsonify({"error": "Nie znaleziono dokumentu."}), 404
 
+@app.route("/documents/<string:source_name>/<string:document_name>/latest", methods=["GET"])
+def get_latest_version(source_name, document_name):
+    with conn.cursor() as cur:
+        cur.execute("SELECT id FROM sources WHERE name = %s", (source_name,))
+        src = cur.fetchone()
+        if not src:
+            return jsonify({"error": "Nie znaleziono źródła."}), 404
+
+        cur.execute("SELECT id FROM documents WHERE name = %s AND source_id = %s", (document_name, src[0]))
+        doc = cur.fetchone()
+        if not doc:
+            return jsonify({"error": "Nie znaleziono dokumentu."}), 404
+
+        cur.execute("SELECT id, document_id, name, content, date FROM versions WHERE document_id = %s ORDER BY date DESC LIMIT 1",(doc[0],))
+        ver = cur.fetchone()
+        if not ver:
+            return jsonify({"error": "Brak wersji dla tego dokumentu."}), 404
+
+        version_id, document_id, name, content, date = ver
+        return jsonify({"id": version_id,"document_id": document_id,"name": name,"content": content,"date": date.isoformat()})
+
 @app.route("/versions/<string:source_name>/<string:document_name>", methods=["POST"])
 def create_version(source_name, document_name):
     data = request.get_json()
