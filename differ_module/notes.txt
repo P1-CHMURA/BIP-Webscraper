@@ -1,3 +1,11 @@
+docker network create differ_net
+
+docker build --file postgres.Dockerfile -t differ_postgres ..
+docker run -p 5432:5432 --name differ_postgres --network differ_net -d differ_postgres
+
+docker build --file postgres_api.Dockerfile -t differ_postgres_api ..
+docker run -p 8000:5000 --name postgres_api --network differ_net -d differ_postgres_api
+
 docker build --file differ_redis.Dockerfile -t differ_redis .
 docker run -p 5011:6379 --name differ_redis differ_redis
 
