@@ -1,6 +1,7 @@
 from flask import Flask, request
 from redis import Redis
 from rq import Queue
+import json
 import diff_task
 
 app = Flask(__name__)
@@ -20,9 +21,11 @@ def index():
     
 @app.route("/diff_request", methods=["POST"])
 def diff_request():
-    result = queue.enqueue(diff_task.DiffTask)
-    print(result.return_value)  
-    return "xd"
+    text = "{\"link-main\": \"https://dupa.pl\",\"link\": \"https://dupa.pl/zasób\",\"content\": \"cały zescrapowany tekst\",\"typ\": \"pdf\", \"timestamp\": \"jakiś czas\"}";
+    
+    
+    result = queue.enqueue(diff_task.DiffTask, text)
+    return "diff request processed"
 
 if __name__ =="__main__":
 	app.run(debug=True, port=port)
