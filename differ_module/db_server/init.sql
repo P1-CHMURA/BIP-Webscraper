@@ -1,18 +1,17 @@
 CREATE TABLE sources (
     id SERIAL PRIMARY KEY,
-    name TEXT UNIQUE NOT NULL,
-    url TEXT NOT NULL
+    name TEXT UNIQUE NOT NULL
 );
 
 CREATE TABLE documents (
     id SERIAL PRIMARY KEY,
     name TEXT NOT NULL,
+    typ TEXT NOT NULL,
     source_id INTEGER REFERENCES sources(id) ON DELETE CASCADE
 );
 
 CREATE TABLE versions (
     id SERIAL PRIMARY KEY,
-    name TEXT NOT NULL,
     document_id INTEGER REFERENCES documents(id) ON DELETE CASCADE,
     content TEXT NOT NULL,
     date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
