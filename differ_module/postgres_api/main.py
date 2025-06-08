@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify
+from datetime import datetime
 import psycopg2
 
 DB_NAME = "postgres"
@@ -110,7 +111,12 @@ def create_version(document_name):
         doc = cur.fetchone()
         if not doc:
             return jsonify({"error": "Nie znaleziono dokumentu."}), 404
-        cur.execute("INSERT INTO versions (document_id, content) VALUES (%s, %s) RETURNING id, date", (doc[0], data["content"]))
+        timestamp = data.get("timestamp")
+        try:
+            timestamp = datetime.fromisoformat(timestamp)
+        except:
+            timestamp = datetime.now()
+        cur.execute("INSERT INTO versions (document_id, content, date) VALUES (%s, %s, %s) RETURNING id, date", (doc[0], data["content"], timestamp))
         version_id, date = cur.fetchone()
         conn.commit()
         return jsonify({"id": version_id, "document_id": doc[0], "document_name": document_name, "content": data["content"], "date": date.isoformat()}), 201

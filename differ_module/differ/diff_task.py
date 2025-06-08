@@ -48,11 +48,13 @@ def DiffTask(text):
             r = requests.post(db_server+f"documents/{link_main}", j)
             j2 = {}
             j2["content"] = content
+            j2["timestamp"] = timestamp
             requests.post(db_server+f"versions/{link}", j2)
             sendToLLM(link_main, link, typ, content, timestamp, "NEW")
         if error_msg.startswith("Brak"):
             j = {}
             j["content"] = content
+            j["timestamp"] = timestamp
             requests.post(db_server+f"versions/{link}", j)
             sendToLLM(link_main, link, typ, content, timestamp, "NEW")
     else:
@@ -60,11 +62,12 @@ def DiffTask(text):
         diff = context_diff(content, r_json["content"])
         result_str = ""
         if len(list(diff)) == 0:
-            return;
+            return
         for ele in diff:
             result_str += ele
         j = {}
         j["content"] = result_str
+        j["timestamp"] = timestamp
         requests.post(db_server+f"versions/{link}", j)
         sendToLLM(link_main, link, typ, content, timestamp, "UPDATE")
 
