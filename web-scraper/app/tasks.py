@@ -15,10 +15,14 @@ import pytesseract
 from pdf2image import convert_from_path
 import re
 from lxml import etree
+import datetime
 file_pattern = re.compile(r"(pdf|docx?|xls(x?)?|xml?)$", re.IGNORECASE)
 
 @shared_task
 def my_task(text, schedule_name,Site_url):
+    now_string = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    print("datetime module path:", datetime.__file__)
+    print(now_string)
     try:
         with sync_playwright() as p:
             browser = p.chromium.launch(headless=True)
@@ -46,7 +50,7 @@ def my_task(text, schedule_name,Site_url):
                 "link": Site_url,
                 "content": content,
                 "typ": "WebSite",
-                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "timestamp": now_string,
             }
             for link in pdf_links:
                 save_location = "downloaded_pdf.pdf"
@@ -57,7 +61,7 @@ def my_task(text, schedule_name,Site_url):
                     "link": link,
                     "content": text,
                     "typ": "PDF",
-                    "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    "timestamp": now_string,
                 }])
 
                 os.remove(save_location)
@@ -70,7 +74,7 @@ def my_task(text, schedule_name,Site_url):
                     "link": link,
                     "content": text,
                     "typ": "DOCX",
-                    "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    "timestamp": now_string,
                 }])
                 os.remove(docx_file)
             for link in excel_links:
@@ -82,7 +86,7 @@ def my_task(text, schedule_name,Site_url):
                     "link": link,
                     "content": text,
                     "typ": "EXCEL",
-                    "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    "timestamp": now_string,
                 }])
                 os.remove(Excel_file)
             for link in xml_links:
@@ -92,7 +96,7 @@ def my_task(text, schedule_name,Site_url):
                     "link": link,
                     "content": text,
                     "typ": "XML",
-                    "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    "timestamp": now_string,
                 }])
             send_results_to_api(main_json)
             for link in filtered_links:
@@ -107,7 +111,7 @@ def my_task(text, schedule_name,Site_url):
                         "link": link,
                         "content": text_content,
                         "typ": "WebSite",
-                        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                        "timestamp": now_string,
                     }])
                 except:
                     text_content = "Failed to retrieve content"
@@ -116,7 +120,7 @@ def my_task(text, schedule_name,Site_url):
                         "link": link,
                         "content": text_content,
                         "typ": "WebSite",
-                        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                        "timestamp": now_string,
                     }])
 
 
@@ -174,9 +178,9 @@ def extract_excel_to_json_text(excel_file):
     return json_text
 def send_results_to_api(results):
     """Send extracted results to the Flask API."""
-    api_url = "http://resolts:5001/receive_results"  # Change if needed
+    api_url = "http://flask-api:5001/receive_results"  # Change if needed
     headers = {"Content-Type": "application/json"}
-    print(results)
+    #print(results)
     try:
         response = requests.post(api_url, json=results, headers=headers)
         response.raise_for_status()
