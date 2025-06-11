@@ -46,7 +46,7 @@ def my_task(text, schedule_name,Site_url):
                            file_pattern.search(link) and link.lower().endswith(('xls', 'xlsx'))]
             xml_links = [link for link in links if link.lower().endswith('xml')]
             main_json = {
-                "link - main": Site_url,
+                "link-main": Site_url,
                 "link": Site_url,
                 "content": content,
                 "typ": "WebSite",
@@ -57,7 +57,7 @@ def my_task(text, schedule_name,Site_url):
                 downloadFile(link, save_location)
                 text = extract_text_tesseract(save_location)
                 send_results_to_api([{
-                    "link - main": Site_url,
+                    "link-main": Site_url,
                     "link": link,
                     "content": text,
                     "typ": "PDF",
@@ -70,7 +70,7 @@ def my_task(text, schedule_name,Site_url):
                 downloadFile(link, docx_file)
                 text = extract_text_from_docx(docx_file)
                 Dsend_results_to_api([{
-                    "link - main": Site_url,
+                    "link-main": Site_url,
                     "link": link,
                     "content": text,
                     "typ": "DOCX",
@@ -82,7 +82,7 @@ def my_task(text, schedule_name,Site_url):
                 downloadFile(link, Excel_file)
                 text = extract_excel_to_json_text(Excel_file)
                 send_results_to_api([{
-                    "link - main": Site_url,
+                    "link-main": Site_url,
                     "link": link,
                     "content": text,
                     "typ": "EXCEL",
@@ -92,7 +92,7 @@ def my_task(text, schedule_name,Site_url):
             for link in xml_links:
                 text = extract_text_from_xml(link)
                 send_results_to_api([{
-                    "link - main": Site_url,
+                    "link-main": Site_url,
                     "link": link,
                     "content": text,
                     "typ": "XML",
@@ -107,7 +107,7 @@ def my_task(text, schedule_name,Site_url):
 
 
                     send_results_to_api([{
-                        "link - main": Site_url,
+                        "link-main": Site_url,
                         "link": link,
                         "content": text_content,
                         "typ": "WebSite",
@@ -116,7 +116,7 @@ def my_task(text, schedule_name,Site_url):
                 except:
                     text_content = "Failed to retrieve content"
                     send_results_to_api([{
-                        "link - main": Site_url,
+                        "link-main": Site_url,
                         "link": link,
                         "content": text_content,
                         "typ": "WebSite",
@@ -178,7 +178,7 @@ def extract_excel_to_json_text(excel_file):
     return json_text
 def send_results_to_api(results):
     """Send extracted results to the Flask API."""
-    api_url = "http://flask-api:5001/receive_results"  # Change if needed
+    api_url = "http://differ_server:5010/diff_request"  # Change if needed
     headers = {"Content-Type": "application/json"}
     #print(results)
     try:
@@ -190,5 +190,3 @@ def send_results_to_api(results):
 
 
 # Call this function at the end of scrape_website()
-
-
