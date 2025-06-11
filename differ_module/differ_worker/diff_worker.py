@@ -5,5 +5,6 @@ from rq import Worker
 import diff_task
 
 # Provide the worker with the list of queues (str) to listen to.
-w = Worker(['default'], connection=Redis(host="127.0.0.1", port=5011))
+w = Worker(['default'], connection=Redis(host="differ_redis", port=6379))
+
 w.work()
