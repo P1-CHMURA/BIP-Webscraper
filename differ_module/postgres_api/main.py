@@ -5,7 +5,7 @@ import psycopg2
 DB_NAME = "postgres"
 DB_USER = "postgres"
 DB_PASSWORD = "postgres"
-DB_HOST = "differ_postgres"
+DB_HOST = "db_server"
 DB_PORT = "5432"
 
 conn = psycopg2.connect(dbname=DB_NAME, user=DB_USER, password=DB_PASSWORD, host=DB_HOST, port=DB_PORT)
@@ -133,4 +133,4 @@ def list_versions(document_name):
         return jsonify([{"id": v[0], "document_id": doc[0], "document_name": document_name, "content": v[1], "date": v[2].isoformat()} for v in vers])
 
 if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0", port=5000)
+    app.run(debug=True, host="0.0.0.0", port=5011)

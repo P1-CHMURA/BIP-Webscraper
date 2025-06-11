@@ -34,4 +34,4 @@ EXPOSE 6379
 
 
 # Start Redis server in the background, and then Flask and Celery
-CMD redis-server & flask run --host=0.0.0.0 --port=5000
+CMD redis-server & flask run  --host=0.0.0.0 --port=5000

@@ -2,9 +2,8 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-COPY ./postgres_api/requirements.txt .
+COPY . .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY ./postgres_api .
-
+EXPOSE 5011
 CMD ["python", "main.py"]

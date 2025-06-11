@@ -3,11 +3,11 @@ services:
   redis:
     image: "redis:alpine"
     container_name: redis
-    command: ["redis-server", "--bind", "0.0.0.0"]
     ports:
       - "6379:6379"
     networks:
-      - app-network
+      - internal_net
+
   ocr-app:
     build:
       context: .
@@ -24,7 +24,9 @@ services:
     depends_on:
       - redis
     networks:
-      - app-network
+      - internal_net
+      - external_net
+
   celery-worker:
     container_name: celery-worker
     build: .
@@ -32,7 +34,10 @@ services:
     depends_on:
       - redis
     networks:
-      - app-network
+      - internal_net
+      - external_net
+
+
   celery-beat:
     container_name: celery-beat
     build: .
@@ -46,8 +51,11 @@ services:
       - redis
       - celery-worker
     networks:
-      - app-network
-
+      - internal_net
+      - external_net
+    
 networks:
-  app-network:
-    driver: bridge
+  internal_net:
+    internal: true
+  external_net:
+    external: true

@@ -1,0 +1,60 @@
+services:
+  differ_server:
+    build:
+      context: ./differ_server
+    container_name: differ_server
+    ports:
+      - 5010:5010
+    depends_on:
+      - differ_redis
+    networks:
+      - internal_net_differ
+      - external_net
+  differ_redis:
+    build:
+        context: ./differ_redis
+    container_name: differ_redis
+    ports:
+      - 6379:6379
+    networks:
+      - internal_net_differ
+      - external_net
+
+  differ_worker:
+    build:
+      context: ./differ_worker
+    container_name: differ_worker
+    depends_on:
+      - differ_redis
+      - differ_server
+    networks:
+      - internal_net_differ
+      - external_net
+  postgres_api:
+    build:
+      context: ./postgres_api
+    container_name: postgres_api
+    ports:
+      - 5011:5011
+    depends_on:
+      - db_server
+    networks:
+      - internal_net_db
+      - external_net
+  db_server:
+    build:
+        context: ./db_server
+    container_name: db_server
+    ports:
+      - 5432:5432
+    networks:
+      - internal_net_db
+    
+    
+networks:
+  internal_net_differ:
+    internal: true
+  internal_net_db:
+    internal: true
+  external_net:
+    external: true
