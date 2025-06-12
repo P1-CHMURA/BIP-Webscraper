@@ -132,5 +132,49 @@ def list_versions(document_name):
         vers = cur.fetchall()
         return jsonify([{"id": v[0], "document_id": doc[0], "document_name": document_name, "content": v[1], "date": v[2].isoformat()} for v in vers])
 
+@app.route("/summaries/<path:document_name>", methods=["POST"])
+def create_summary(document_name):
+    data = request.get_json()
+    with conn.cursor() as cur:
+        cur.execute("SELECT id FROM documents WHERE name = %s", (document_name,))
+        doc = cur.fetchone()
+        if not doc:
+            return jsonify({"error": "Nie znaleziono dokumentu."}), 404
+        timestamp = data.get("timestamp")
+        try:
+            timestamp = datetime.fromisoformat(timestamp)
+        except:
+            timestamp = datetime.now()
+        cur.execute("INSERT INTO summaries (document_id, content, date) VALUES (%s, %s, %s) RETURNING id, date", (doc[0], data["content"], timestamp))
+        summary_id, date = cur.fetchone()
+        conn.commit()
+        return jsonify({"id": summary_id, "document_id": doc[0],"document_name": document_name,"content": data["content"], "date": date.isoformat()}), 201
+
+@app.route("/summaries/<path:document_name>", methods=["GET"])
+def list_summaries(document_name):
+    with conn.cursor() as cur:
+        cur.execute("SELECT id FROM documents WHERE name = %s", (document_name,))
+        doc = cur.fetchone()
+        if not doc:
+            return jsonify({"error": "Nie znaleziono dokumentu."}), 404
+        cur.execute("SELECT id, content, date FROM summaries WHERE document_id = %s ORDER BY date DESC", (doc[0],))
+        summaries = cur.fetchall()
+        return jsonify([{"id": s[0],"document_id": doc[0],"document_name": document_name, "content": s[1], "date": s[2].isoformat()} for s in summaries])
+
+@app.route("/summaries_latest/<path:document_name>", methods=["GET"])
+def get_latest_summary(document_name):
+    with conn.cursor() as cur:
+        cur.execute("SELECT id FROM documents WHERE name = %s", (document_name,))
+        doc = cur.fetchone()
+        if not doc:
+            return jsonify({"error": "Nie znaleziono dokumentu."}), 404
+
+        cur.execute("SELECT id, content, date FROM summaries WHERE document_id = %s ORDER BY date DESC LIMIT 1", (doc[0],))
+        summary = cur.fetchone()
+        if not summary:
+            return jsonify({"error": "Brak streszczeń dla tego dokumentu."}), 404
+
+        return jsonify({"id": summary[0],"document_id": doc[0], "document_name": document_name,"content": summary[1],"date": summary[2].isoformat()})
+    
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=5011)
