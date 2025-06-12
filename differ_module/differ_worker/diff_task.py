@@ -41,7 +41,6 @@ def DiffTask(text):
     r = requests.post(db_server+f"documents/{link_main}", json = j, headers = headers)
     
     r = requests.get(db_server+"/documents_latest/"+link)
-    # sprawdz czy jest jakaś wersja tego dokumentu
     if r.status_code == 404:
         j = {}
         j["content"] = content
@@ -50,7 +49,7 @@ def DiffTask(text):
         sendToLLM(link_main, link, typ, content, timestamp, "NEW")
     else:
         r_json = r.json()
-        diff = difflib.context_diff(content, r_json["content"])
+        diff = difflib.context_diff(r_json["content"], content)
         result_str = ""
         for ele in diff:
             result_str = result_str + ele
