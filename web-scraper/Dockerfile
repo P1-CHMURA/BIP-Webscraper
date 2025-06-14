@@ -7,11 +7,15 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y \
     build-essential \
     redis-server \
+    tesseract-ocr \
+    tesseract-ocr-pol \
+    poppler-utils \
     && rm -rf /var/lib/apt/lists/*
 # Install dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
-
+# Install Playwright browsers
+RUN playwright install --with-deps
 # Install system dependencies for Celery/Redis/SQLAlchemy
 
 
@@ -30,4 +34,4 @@ EXPOSE 6379
 
 
 # Start Redis server in the background, and then Flask and Celery
-CMD redis-server & flask run --host=0.0.0.0 --port=5000
+CMD redis-server & flask run  --host=0.0.0.0 --port=5000

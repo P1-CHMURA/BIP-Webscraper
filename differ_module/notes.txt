@@ -1,13 +1,8 @@
-docker network create differ_net
+docker network create --driver bridge --internal internal_net_differ
+docker network create --driver bridge --internal internal_net_db
+docker network create --driver bridge external_net
 
-docker build --file postgres.Dockerfile -t differ_postgres ..
-docker run -p 5432:5432 --name differ_postgres --network differ_net -d differ_postgres
 
-docker build --file postgres_api.Dockerfile -t differ_postgres_api ..
-docker run -p 8000:5000 --name postgres_api --network differ_net -d differ_postgres_api
+//test
+curl -X POST "http://localhost:5010/diff_request" -H "Content-Type: application/json" -d "[{\"link-main\": \"https://test.pl\",\"link\": \"test2\",\"content\": \"testowaasd wiadomosc3\",\"typ\": \"pdf\", \"timestamp\": \"jakiś czas\"}]"
 
-docker build --file differ_redis.Dockerfile -t differ_redis .
-docker run -p 5011:6379 --name differ_redis differ_redis
-
-sudo docker build --file differ_worker.Dockerfile -t differ_worker ..
-sudo docker run --name differ_worker --network="host" differ_worker

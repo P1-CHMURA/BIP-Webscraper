@@ -15,31 +15,24 @@ import pytesseract
 from pdf2image import convert_from_path
 import re
 from lxml import etree
+import datetime
 file_pattern = re.compile(r"(pdf|docx?|xls(x?)?|xml?)$", re.IGNORECASE)
 
 @shared_task
 def my_task(text, schedule_name,Site_url):
+    now_string = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    print("datetime module path:", datetime.__file__)
+    print(now_string)
     try:
         with sync_playwright() as p:
-            browser = p.chromium.launch(headless=True)  # Launch headless browser
-            page = browser.new_page()  # Open a new page
-            page.goto(Site_url, wait_until="load")  # Wait for page load
-
-            # Wait for the main content to load
-            page.wait_for_selector("#main", timeout=5000)  # Adjust timeout if necessary
-            # print(page.content())
-            # Extract inner text from the #main element
-            nav_content = page.locator("#main").inner_text()
-            # print("Main Content:", nav_content)  # Print content of #main
-
-            # Wait for the article with id 'wide' to appear
-            page.wait_for_selector("article#wide", timeout=5000)  # Wait until it's present
-
-            # Extract inner text from the article#wide
+            browser = p.chromium.launch(headless=True)
+            page = browser.new_page()
+            page.goto(Site_url, wait_until="load")
+            page.wait_for_selector("#main", timeout=5000)
+            page.wait_for_selector("article#wide", timeout=5000)
             content = page.inner_text("article#wide")
-            # print("Article Content:", content)  # Print the content of article#wide
             page.wait_for_selector("a", timeout=5000)
-            # Close the browser
+
             links = page.evaluate("""
                     () => {
                         return Array.from(document.querySelectorAll('a')).map(a => a.href);
@@ -53,72 +46,86 @@ def my_task(text, schedule_name,Site_url):
                            file_pattern.search(link) and link.lower().endswith(('xls', 'xlsx'))]
             xml_links = [link for link in links if link.lower().endswith('xml')]
             main_json = {
-                "Main site content": content,
-                "URLs of sub Sites": filtered_links,
-                "Extracted files": []
+                "link-main": Site_url,
+                "link": Site_url,
+                "content": content,
+                "typ": "WebSite",
+                "timestamp": now_string,
             }
-
-            PDF = []
-            print("PDF Links:", pdf_links)
             for link in pdf_links:
                 save_location = "downloaded_pdf.pdf"
                 downloadFile(link, save_location)
                 text = extract_text_tesseract(save_location)
-                PDF.append({"PDF_url": link, "PDF_text": text})
+                send_results_to_api([{
+                    "link-main": Site_url,
+                    "link": link,
+                    "content": text,
+                    "typ": "PDF",
+                    "timestamp": now_string,
+                }])
+
                 os.remove(save_location)
-            DOCX = []
             for link in doc_links:
                 docx_file = "downloaded_docx.docx"
                 downloadFile(link, docx_file)
                 text = extract_text_from_docx(docx_file)
-                DOCX.append({"DOCX_url": link, "DOCX_text": text})
+                Dsend_results_to_api([{
+                    "link-main": Site_url,
+                    "link": link,
+                    "content": text,
+                    "typ": "DOCX",
+                    "timestamp": now_string,
+                }])
                 os.remove(docx_file)
-            EXCEL = []
             for link in excel_links:
                 Excel_file = "downloaded_excel.xlsx"
                 downloadFile(link, Excel_file)
                 text = extract_excel_to_json_text(Excel_file)
-                EXCEL.append({"Excel_url": link, "Excel_text": text})
+                send_results_to_api([{
+                    "link-main": Site_url,
+                    "link": link,
+                    "content": text,
+                    "typ": "EXCEL",
+                    "timestamp": now_string,
+                }])
                 os.remove(Excel_file)
-            XML = []
             for link in xml_links:
                 text = extract_text_from_xml(link)
-                XML.append({"XML_url": link, "XML_text": text})
-            main_json['Extracted files'].append({"PDF": PDF, "DOCX": DOCX, "EXCEL": EXCEL, "XML": XML})
-
+                send_results_to_api([{
+                    "link-main": Site_url,
+                    "link": link,
+                    "content": text,
+                    "typ": "XML",
+                    "timestamp": now_string,
+                }])
             send_results_to_api(main_json)
-            # Display the resulting JSON
-
-            # Optionally resolve relative links to absolute links
-
-
-
-
-
-
             for link in filtered_links:
                 try:
                     page.goto(link, wait_until="load")
-                    # print(page.content())
-                    page.wait_for_selector("article#wide", timeout=5000)  # Wait until it's present
+                    page.wait_for_selector("article#wide", timeout=5000)
+                    text_content = page.inner_text("article#wide")
 
-                    # Extract inner text from the article#wide
-                    text_content = page.inner_text("article#wide")  # Extracting main content
-                    # print("Text Content:", text_content)
-                    send_results_to_api(text_content)
+
+                    send_results_to_api([{
+                        "link-main": Site_url,
+                        "link": link,
+                        "content": text_content,
+                        "typ": "WebSite",
+                        "timestamp": now_string,
+                    }])
                 except:
                     text_content = "Failed to retrieve content"
+                    send_results_to_api([{
+                        "link-main": Site_url,
+                        "link": link,
+                        "content": text_content,
+                        "typ": "WebSite",
+                        "timestamp": now_string,
+                    }])
 
 
     except KeyError:
         print("\nFailed to extract data from website")
-    #try:
-    #    entry = RedBeatSchedulerEntry.from_key("redbeat:"+schedule_name, app=celery_app)
-    #except KeyError:
-    #    entry = None
-#
-    #if entry:
-    #    entry.delete()
 
 
 
@@ -171,9 +178,9 @@ def extract_excel_to_json_text(excel_file):
     return json_text
 def send_results_to_api(results):
     """Send extracted results to the Flask API."""
-    api_url = "http://127.0.0.1:5001/receive_results"  # Change if needed
+    api_url = "http://differ_server:5010/diff_request"  # Change if needed
     headers = {"Content-Type": "application/json"}
-    print(results)
+    #print(results)
     try:
         response = requests.post(api_url, json=results, headers=headers)
         response.raise_for_status()

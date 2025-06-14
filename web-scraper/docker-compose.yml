@@ -1,13 +1,13 @@
 version: '3.8'
 services:
   redis:
-    image: redis
+    image: "redis:alpine"
     container_name: redis
-    command: ["redis-server", "--bind", "0.0.0.0"]
     ports:
       - "6379:6379"
     networks:
-      - app-network
+      - internal_net
+
   ocr-app:
     build:
       context: .
@@ -24,17 +24,24 @@ services:
     depends_on:
       - redis
     networks:
-      - app-network
+      - internal_net
+      - external_net
+
   celery-worker:
     container_name: celery-worker
     build: .
+    command: bash -c "celery -A run.celery worker -l info --pool=solo"
     depends_on:
       - redis
     networks:
-      - app-network
+      - internal_net
+      - external_net
+
+
   celery-beat:
     container_name: celery-beat
     build: .
+    command: bash -c "celery -A run.celery beat -S redbeat.RedBeatScheduler --max-interval 30 --loglevel=info"
     environment:
       - CELERY_BROKER=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
@@ -44,8 +51,11 @@ services:
       - redis
       - celery-worker
     networks:
-      - app-network
-
+      - internal_net
+      - external_net
+    
 networks:
-  app-network:
-    driver: bridge
+  internal_net:
+    internal: true
+  external_net:
+    external: true
