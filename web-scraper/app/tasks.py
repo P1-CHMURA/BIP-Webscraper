@@ -190,5 +190,3 @@ def send_results_to_api(results):
 
 
 # Call this function at the end of scrape_website()
-
-
