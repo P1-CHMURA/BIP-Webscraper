@@ -1,0 +1,13 @@
+services:
+  gui:
+    build:
+      context: .
+    container_name: gui
+    ports:
+      - 3000:3000
+    networks:
+      - external_net
+    
+networks:
+  external_net:
+    external: true
