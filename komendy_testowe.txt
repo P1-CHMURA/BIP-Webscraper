@@ -1,0 +1,8 @@
+curl -X POST "http://localhost:5000/scrape" ^
+  -H "Content-Type: application/json" ^
+  -d "{\"url\": \"https://bip.malopolska.pl/umtarnow\", \"schedule_time\": 1, \"interval\": \"MIN\"}"
+
+Invoke-RestMethod -Uri "http://localhost:5000/scrape" `
+    -Method POST `
+    -Headers @{"Content-Type"="application/json"} `
+    -Body '{"url": "https://bip.malopolska.pl/umtarnow", "schedule_time": 1, "interval": "MIN"}'
