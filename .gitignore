@@ -157,6 +157,8 @@ dmypy.json
 # pytype static type analyzer
 .pytype/
 
+
+
 # Cython debug symbols
 cython_debug/
 
@@ -170,3 +172,6 @@ cython_debug/
 # PyPI configuration file
 .pypirc
 *geany*
+
+
+*node_modules/*
