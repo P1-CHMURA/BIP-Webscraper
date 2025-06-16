@@ -172,7 +172,3 @@ cython_debug/
 # PyPI configuration file
 .pypirc
 *geany*
-
-
-*node_modules/*
-*package-lock.json*
