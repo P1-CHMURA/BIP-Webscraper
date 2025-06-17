@@ -16,30 +16,38 @@ def index():
 
     url = data.get('url')
     schedule_time = data.get("schedule_time", 5)
-    interval = get_time_interval(data.get("interval", "MINUTELY"))
+    interval_str = data.get("interval", "MINUTELY")
+    interval = get_time_interval(interval_str)
     print(f"Scraping {url} schedule_time {schedule_time} interval {interval}")
 
     if not url:
         return jsonify({"error": "URL is required"}), 400
-    if schedule_time == "Invalid interval":
+    if interval == "Invalid interval":
         return jsonify({"error": "Interval is out of scope"}), 400
 
-    #my_task.delay("Hello World!")
     schedule_name = str(uuid4())
     dt = datetime.utcnow()
-    interval = rrule(freq=str(interval),interval=schedule_time , dtstart=dt)
+    interval_rrule = rrule(
+        freq=interval,
+        interval=schedule_time,
+        dtstart=dt
+    )
 
-    entry = RedBeatSchedulerEntry(schedule_name,
+    entry = RedBeatSchedulerEntry(
+        schedule_name,
         "app.tasks.my_task",
-        interval,
+        interval_rrule,
         args=["From the scheduler"],
-        kwargs={"schedule_name": schedule_name,"Site_url": url},
+        kwargs={"schedule_name": schedule_name, "Site_url": url},
         app=celery_app
     )
     entry.save()
-    #return jsonify({"do": data}), 202
 
-    return jsonify({"task_id": schedule_name, "status": "queued", "Intervals":schedule_time}), 202
+    return jsonify({
+        "task_id": schedule_name,
+        "status": "queued",
+        "Intervals": schedule_time
+    }), 202
 
 
 

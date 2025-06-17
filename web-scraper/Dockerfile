@@ -1,37 +1,32 @@
-# Use a Python base image
-FROM python:3.10
+# --- Base stage ---
+FROM python:3.10 AS base
 
-# Set a working directory in the container
 WORKDIR /app
 
 RUN apt-get update && apt-get install -y \
     build-essential \
-    redis-server \
     tesseract-ocr \
     tesseract-ocr-pol \
     poppler-utils \
     && rm -rf /var/lib/apt/lists/*
-# Install dependencies
+
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
-# Install Playwright browsers
 RUN playwright install --with-deps
-# Install system dependencies for Celery/Redis/SQLAlchemy
-
-
 RUN pip install celery redis celery-redbeat
-# Copy your Flask app code into the container
+
 COPY . .
 
+# --- App stage ---
+FROM base AS app
 ENV FLASK_APP=run
-ENV FLASK_ENV=development
-ENV FLASK_DEBUG=1
-# Expose port for Flask
-EXPOSE 5000
-EXPOSE 6379
+CMD ["flask", "run", "--host=0.0.0.0", "--port=5000"]
 
-# Command to run the Flask app (Flask web server)
+# --- Worker stage ---
+FROM base AS worker
+CMD ["celery", "-A", "run.celery", "worker", "-l", "info", "--pool=solo"]
 
-
-# Start Redis server in the background, and then Flask and Celery
-CMD redis-server & flask run  --host=0.0.0.0 --port=5000
+# --- Beat stage ---
+FROM base AS beat
+ENV CELERY_BROKER=redis://webscraping_redis:6379/0
+CMD ["celery", "-A", "run.celery", "beat", "-S", "redbeat.RedBeatScheduler", "--max-interval", "30", "--loglevel=info"]
