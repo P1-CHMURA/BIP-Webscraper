@@ -6,8 +6,6 @@ from pydantic import BaseModel, Field
 from transformers import AutoTokenizer, AutoModelForCausalLM
 from contextlib import asynccontextmanager
 
-MODEL_NAME = "Qwen/Qwen3-1.7B-FP8"
-
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -55,43 +53,52 @@ def summarize_data(request: LLMRequest):
             status_code=503,
             detail="Model AI nie jest dostępny. Sprawdź logi serwera."
         )
+    if not request.content:
+        raise HTTPException(status_code=400, detail="Brak treści do podsumowania.")
 
     logger.info(f"Input text to model: {request.content}")
-    prompt_text = f"""
-    Summarize below text.
 
-    ### Text to summarize:
+    prompt_text = f"""
+    Podsumuj poniższy tekst:
+
     {request.content}
+
+    Podsumowanie:
     """
-    
-    chat = [
-        {"role": "user", "content": prompt_text},
-    ]
-    
-    input_ids = app.state.model.apply_chat_template(chat, tokenize=True, add_generation_prompt=True, return_tensors="pt")
-    input_ids = input_ids.to(app.state.model.device)
 
     try:
+        messages = [
+            {"role": "user", "content": prompt_text}
+        ]
+        text = app.state.tokenizer.apply_chat_template(
+            messages,
+            tokenize=False,
+            add_generation_prompt=True,
+            enable_thinking=False
+        )
+        inputs = app.state.tokenizer([text], return_tensors="pt").to(app.state.model.device)
+        input_ids = inputs["input_ids"]
+        
         outputs = app.state.model.generate(
-            input_ids,
+            **inputs,
             max_new_tokens=1028,
             do_sample=True,
             temperature=0.6
         )
         
-        raw_analysis_result = app.state.model.decode(outputs[0][input_ids.shape[-1]:], skip_special_tokens=True).strip()
+        generated_text = app.state.tokenizer.decode(outputs[0][input_ids.shape[-1]:], skip_special_tokens=True).strip()
 
-        logger.info(f"Raw output from model: {raw_analysis_result}")
-        
-        cleaned_analysis_result = re.sub(r'<think>.*?</think>', '', raw_analysis_result, flags=re.DOTALL).strip()
+        logger.info(f"Raw output from model: {generated_text}")
+
+        cleaned_analysis_result = re.sub(r'<think>.*?</think>', '', generated_text, flags=re.DOTALL).strip()
         
         if not cleaned_analysis_result:
-            cleaned_analysis_result = raw_analysis_result
+            cleaned_analysis_result = generated_text
 
         return {"analysis": cleaned_analysis_result}
-        
 
     except Exception as e:
+        logger.error(f"Błąd podczas generowania: {e}")
         raise HTTPException(
             status_code=500,
             detail=f"Wystąpił błąd podczas generowania odpowiedzi przez model: {e}"

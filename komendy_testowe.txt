@@ -1,3 +1,4 @@
+Testowanie całego pipeline-u:
 curl -X POST "http://localhost:5000/scrape" ^
   -H "Content-Type: application/json" ^
   -d "{\"url\": \"https://bip.malopolska.pl/umtarnow\", \"schedule_time\": 1, \"interval\": \"MIN\"}"
@@ -6,3 +7,25 @@ Invoke-RestMethod -Uri "http://localhost:5000/scrape" `
     -Method POST `
     -Headers @{"Content-Type"="application/json"} `
     -Body '{"url": "https://bip.malopolska.pl/umtarnow", "schedule_time": 1, "interval": "MIN"}'
+
+Testowanie endopointu llm:
+$uri = "http://localhost:5020/summarize"
+
+$bodyObject = @{
+    source = "Raport A"
+    name = "Zmiany 2025"
+    typ = "raport"
+    content = "Urodził się 20 sierpnia 1847 roku o godzinie 23:00[6] w Hrubieszowie na Lubelszczyźnie, w rodzinie Antoniego Głowackiego, dworskiego ekonoma o szlacheckich korzeniach (swój późniejszy pseudonim literacki Aleksander Głowacki zaczerpnął z nazwy rodowego herbu Prus I), oraz Apolonii z Trembińskich. W tym czasie rodzina Głowackich mieszkała w majątku Żabcze. Ojciec na czas porodu umieścił matkę u kuzyna, ówczesnego proboszcza Hrubieszowa, księdza kanonika Feliksa Troszczyńskiego[7]. Osierocony w wieku 3 lat przez matkę, a w wieku lat 9 przez ojca, przeszedł pod opiekę babki Marcjanny Trembińskiej mieszkającej w Puławach. Po jej śmierci zamieszkał u ciotki Domiceli z Trembińskich Olszewskiej w Lublinie, gdzie uczęszczał do Powiatowej Szkoły Realnej (przez 4 lata od roku 1857). Następnie znalazł się w Siedlcach (1861) pod opieką starszego o 13 lat brata Leona Głowackiego, pracującego jako nauczyciel historii. Wraz z bratem przeprowadził się w 1862 roku do Kielc, gdzie rozpoczął naukę w gimnazjum.
+Pod wpływem swego brata Leona, działacza frakcji „Czerwonych”, Aleksander Głowacki w roku 1863, mając 16 lat, przerwał naukę w gimnazjum i wziął udział w powstaniu styczniowym. Walczył w oddziale Ludwika Żychlińskiego w bitwie pod Żelazną. Następnie walczył w oddziale Adama Andrzeja Zielińskiego[8]. 1 września został ranny podczas potyczki we wsi Białka (powiat parczewski). Dostał się do rosyjskiej niewoli, jednak ze względu na młody wiek oraz dzięki wstawiennictwu ciotki, po wyjściu ze szpitala pozwolono mu wrócić do Lublina i zamieszkać z rodziną."
+    timestamp = "2025-06-17T10:00:00Z"
+    status = "przetworzony"
+}
+
+# Konwersja do poprawnego JSON UTF8 bez BOM
+$jsonBody = $bodyObject | ConvertTo-Json -Depth 3
+$utf8NoBom = [System.Text.Encoding]::UTF8
+$bodyBytes = $utf8NoBom.GetBytes($jsonBody)
+
+$response = Invoke-RestMethod -Uri $uri -Method Post -Body $bodyBytes -ContentType "application/json"
+
+$response
