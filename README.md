@@ -1,1 +1,2 @@
-# BIP-Webscraper
+To run:
+npm install -> npm run dev
