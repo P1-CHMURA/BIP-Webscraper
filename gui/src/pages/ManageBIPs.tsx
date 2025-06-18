@@ -140,10 +140,10 @@ function ManageBIPs() {
 
         <button
           type="submit"
+          className="rounded-md"
           style={{
             backgroundColor: 'blue',
             color: 'white',
-            border: '1px solid',
             padding: '10px 20px',
             cursor: 'pointer',
             fontSize: '16px',
