@@ -15,13 +15,13 @@ const Layout = () => {
             Strona główna
           </NavLink>
           <NavLink 
-            to="/podsumowania" 
+            to="/summaries" 
             className={({ isActive }) => isActive ? 'active' : ''}
           >
             Podsumowania
           </NavLink>
           <NavLink 
-            to="/zarzadzaj" 
+            to="/manage" 
             className={({ isActive }) => isActive ? 'active' : ''}
           >
             Zarządzaj listą BIP-ów
