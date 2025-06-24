@@ -1,15 +1,14 @@
-import asyncpg
-import os
+import redis
+from rq import Queue
+from llm.tasks import save_summary_task
 
-async def get_db_pool():
-    return await asyncpg.create_pool(dsn=os.getenv("DATABASE_URL"))
+redis_conn = redis.Redis(host='redis', port=6379)
+queue = Queue('summaries', connection=redis_conn)
 
-async def save_summary_to_db(request_data, summary: str):
-    pool = await get_db_pool()
-    async with pool.acquire() as conn:
-        await conn.execute("""
-            INSERT INTO summaries (source, name, typ, content, timestamp, status, summary)
-            VALUES ($1, $2, $3, $4, $5, $6, $7)
-        """, request_data["source"], request_data["name"], request_data["typ"],
-             request_data["content"], request_data["timestamp"], request_data["status"],
-             summary)
+def save_summary_to_db(request_data, summary: str):
+    queue.enqueue(
+        save_summary_task,
+        request_data["name"],
+        summary,
+        request_data["timestamp"]
+    )
