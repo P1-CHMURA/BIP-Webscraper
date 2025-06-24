@@ -1,12 +1,9 @@
-import torch
-import re
 import logging
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from transformers import AutoTokenizer, AutoModelForCausalLM
 import asyncio
-from contextlib import asynccontextmanager
-from llm.queue import summary_queue, queue_worker
+from llm_queue import summary_queue, queue_worker
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -55,35 +52,3 @@ async def summarize_data(request: LLMRequest):
 @app.get("/")
 def read_root():
     return {"message": "LLM działa!"}
-
-async def summarize_with_model(app, content: str) -> str:
-    prompt_text = f"""
-    Podsumuj poniższy tekst:
-
-    {content}
-
-    Podsumowanie:
-    """
-    messages = [{"role": "user", "content": prompt_text}]
-    text = app.state.tokenizer.apply_chat_template(
-        messages,
-        tokenize=False,
-        add_generation_prompt=True,
-        enable_thinking=False
-    )
-    inputs = app.state.tokenizer([text], return_tensors="pt").to(app.state.model.device)
-    input_ids = inputs["input_ids"]
-
-    outputs = app.state.model.generate(
-        **inputs,
-        max_new_tokens=1028,
-        do_sample=True,
-        temperature=0.6
-    )
-
-    generated_text = app.state.tokenizer.decode(
-        outputs[0][input_ids.shape[-1]:], skip_special_tokens=True
-    ).strip()
-
-    cleaned = re.sub(r'<think>.*?</think>', '', generated_text, flags=re.DOTALL).strip()
-    return cleaned if cleaned else generated_text

@@ -1,6 +1,6 @@
 import asyncio
-from llm.database import save_summary_to_db
-from llm.main import summarize_with_model
+from database import save_summary_to_db
+from summarizer import summarize_with_model
 
 summary_queue = asyncio.Queue()
 

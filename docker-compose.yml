@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   webscraping_redis:
     image: "redis:alpine"
