@@ -15,4 +15,6 @@ RUN apt-get update && apt-get install -y \
 
 COPY . .
 
+RUN python /app/preload_model.py
+
 CMD [ "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "5020", "--reload" ]

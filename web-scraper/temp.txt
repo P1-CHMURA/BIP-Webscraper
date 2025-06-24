@@ -1,0 +1,16 @@
+celery -A run.celery worker -l info --pool=solo
+celery -A run.celery beat -S redbeat.RedBeatScheduler --max-interval 30 --loglevel=info
+
+flask run
+
+ curl -X POST "http://localhost:5000/scrape" -H "Content-Type: application/json" -d '{"url": "https://lowcygier.pl/", "schedule_time": 5, "interval": "MINUTELY"}"
+ curl -X POST "http://localhost:5000/scrape" -H "Content-Type: application/json" -d "{\"url\": \"https://lowcygier.pl/\", \"schedule_time\": 5, \"interval\": \"MIN\"}"
+
+
+
+curl -X POST "http://localhost:5000/scrape" -H "Content-Type: application/json" -d "{\"url\": \"https://bip.malopolska.pl/umtarnow\", \"schedule_time\": 1, \"interval\": \"MIN\"}"
+
+
+
+docker network create --driver bridge --internal internal_net
+docker network create --driver bridge external_net
