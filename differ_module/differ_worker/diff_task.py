@@ -2,7 +2,7 @@ import requests
 import json
 import difflib
 db_server = "http://postgres_api:5011/"
-llm_server = "http://llm:5020/cokolwiek" #TODO
+llm_server = "http://llm:5020/summarize"
 headers={
     'Content-type':'application/json', 
     'Accept':'application/json'
