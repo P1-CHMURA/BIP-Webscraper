@@ -1,15 +1,14 @@
-import httpx
+import redis
+from rq import Queue
+from llm.tasks import save_summary_task
 
-async def save_summary_to_db(request_data, summary: str):
-    async with httpx.AsyncClient() as client:
-        payload = {
-            "content": summary,
-            "timestamp": request_data["timestamp"]
-        }
-        response = await client.post(
-            f"http://postgres_api:5011/summaries/{request_data['name']}",
-            json=payload
-        )
+redis_conn = redis.Redis(host='redis', port=6379)
+queue = Queue('summaries', connection=redis_conn)
 
-        if response.status_code != 201:
-            raise Exception(f"Nie udało się zapisać streszczenia: {response.text}")
+def save_summary_to_db(request_data, summary: str):
+    queue.enqueue(
+        save_summary_task,
+        request_data["name"],
+        summary,
+        request_data["timestamp"]
+    )
