@@ -10,10 +10,10 @@ def create_app():
     app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///db.sqlite3"
     app.config["SECRET_KEY"] = "super-secret-key"
     app.config["CELERY_CONFIG"] = {
-        "broker_url": "redis://redis:6379/0",  # Correct Redis container name
-        "result_backend": "redis://redis:6379/0"}
+        "broker_url": "redis://webscraping_redis:6379/0",  # Correct Redis container name
+        "result_backend": "redis://webscraping_redis:6379/0"}
     app.config["REDBEAT_SCHEDULE"] = {}
-    app.config["REDBEAT_REDIS_URL"] = "redis://localhost:6379/0"  # Redis URL for scheduler
+    app.config["REDBEAT_REDIS_URL"] = "redis://webscraping_redis:6379/0"  # Redis URL for scheduler
     app.config["REDBEAT_LOCK_KEY"] = "redbeat:lock"  # Lock key for Redbeat
     app.config["REDBEAT_MAX_INTERVAL"] = 30
 
