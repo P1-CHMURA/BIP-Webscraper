@@ -1,11 +1,11 @@
 import redis
-from rq import Worker, Queue, Connection
+from rq import Worker, Queue
 
 listen = ['summaries']
 
-redis_conn = redis.Redis(host='redis', port=6379)
+redis_conn = redis.Redis(host='llm_redis', port=6379)
 
 if __name__ == '__main__':
-    with Connection(redis_conn):
-        worker = Worker(map(Queue, listen))
-        worker.work()
+    queue = Queue(name='summaries', connection=redis_conn)
+    worker = Worker([queue], connection=redis_conn)
+    worker.work()

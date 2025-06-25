@@ -9,7 +9,7 @@ async def queue_worker(app):
         request_data = await summary_queue.get()
         try:
             summary = await summarize_with_model(app, request_data["content"])
-            await save_summary_to_db(request_data, summary)
+            save_summary_to_db(request_data, summary)
         except Exception as e:
             print(f"[KOLEJKA] Błąd przetwarzania: {e}")
         finally:

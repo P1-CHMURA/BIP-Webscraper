@@ -3,14 +3,14 @@ import { useState, type ChangeEvent, type FormEvent } from 'react';
 interface FormData {
   url: string;
   scheduleTime: string;
-  interval: 'MINUTELY' | 'HOURLY' | 'DAILY';
+  interval: 'MIN' | 'HOUR' | 'D';
 }
 
 function ManageBIPs() {
   const [formData, setFormData] = useState<FormData>({
     url: '',
     scheduleTime: '',
-    interval: 'MINUTELY',
+    interval: 'MIN',
   });
 
   const [jsonString, setJsonString] = useState('');
@@ -62,7 +62,7 @@ function ManageBIPs() {
     setFormData({
       url: '',
       scheduleTime: '',
-      interval: 'MINUTELY',
+      interval: 'MIN',
     });
   };
 
@@ -131,9 +131,9 @@ function ManageBIPs() {
                 maxWidth: '200px',
               }}
             >
-              <option value="MINUTELY">Minuty</option>
-              <option value="HOURLY">Godziny</option>
-              <option value="DAILY">Dni</option>
+              <option value="MIN">Minuty</option>
+              <option value="HOUR">Godziny</option>
+              <option value="D">Dni</option>
             </select>
           </label>
         </div>

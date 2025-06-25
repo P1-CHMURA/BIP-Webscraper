@@ -114,10 +114,32 @@ services:
       retries: 5
       start_period: 10s
 
+  llm_redis:
+    image: redis:alpine
+    container_name: llm_redis
+    ports:
+    - 6380:6379
+    networks:
+    - net_web
+
+  llm_worker:
+    build:
+      context: ./llm
+      target: worker
+    volumes:
+      - ./llm:/app
+    depends_on:
+      - llm_redis
+    networks:
+      - net_web
+
   llm:
     build:
       context: ./llm
+      target: app
     container_name: llm
+    volumes:
+      - ./llm:/app
     ports:
       - 5020:5020
     networks:

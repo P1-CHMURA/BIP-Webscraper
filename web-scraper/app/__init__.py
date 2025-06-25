@@ -1,4 +1,5 @@
 from flask import Flask
+from flask_cors import CORS
 
 from .extensions import db
 from .views import main
@@ -7,6 +8,7 @@ from .utils import make_celery
 
 def create_app():
     app = Flask(__name__)
+    CORS(app, origins=["http://localhost:3000"])
     app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///db.sqlite3"
     app.config["SECRET_KEY"] = "super-secret-key"
     app.config["CELERY_CONFIG"] = {

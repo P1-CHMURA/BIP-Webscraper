@@ -69,7 +69,7 @@ def my_task(text, schedule_name,Site_url):
                 docx_file = "downloaded_docx.docx"
                 downloadFile(link, docx_file)
                 text = extract_text_from_docx(docx_file)
-                Dsend_results_to_api([{
+                send_results_to_api([{
                     "link-main": Site_url,
                     "link": link,
                     "content": text,

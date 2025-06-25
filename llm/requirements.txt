@@ -6,4 +6,6 @@ uvicorn==0.34.3
 accelerate
 bitsandbytes
 asyncpg
-httpx
+rq
+redis
+requests

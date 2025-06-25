@@ -1,8 +1,8 @@
 import redis
 from rq import Queue
-from llm.tasks import save_summary_task
+from tasks import save_summary_task
 
-redis_conn = redis.Redis(host='redis', port=6379)
+redis_conn = redis.Redis(host='llm_redis', port=6379)
 queue = Queue('summaries', connection=redis_conn)
 
 def save_summary_to_db(request_data, summary: str):
