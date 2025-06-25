@@ -41,19 +41,25 @@ jobs:
 
           if [ "${{ matrix.target }}" = "default" ]; then
             IMAGE=test-$SAFE_PATH
-            docker buildx build -t $IMAGE ./${{ matrix.path }}
+            echo "Building image $IMAGE from path ./${{ matrix.path }}"
+            docker buildx build -t $IMAGE ./${{ matrix.path }} --load
           else
             IMAGE=test-$SAFE_PATH-${{ matrix.target }}
-            docker buildx build --target ${{ matrix.target }} -t $IMAGE ./${{ matrix.path }}
+            echo "Building image $IMAGE from path ./${{ matrix.path }} with target ${{ matrix.target }}"
+            docker buildx build --target ${{ matrix.target }} -t $IMAGE ./${{ matrix.path }} --load
           fi
 
           echo "Built image: $IMAGE"
+          
+          # Verify the image was created
+          echo "Verifying image exists:"
+          docker images | grep $IMAGE || (echo "ERROR: Image $IMAGE was not created!" && exit 1)
 
       - name: Run Container and Log Output
         run: |
           set -e
 
-          # Replace forward slashes with hyphens in image names
+          # Use the same image naming logic as the build step
           SAFE_PATH=$(echo "${{ matrix.path }}" | sed 's|/|-|g')
 
           if [ "${{ matrix.target }}" = "default" ]; then
