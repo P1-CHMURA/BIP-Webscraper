@@ -32,16 +32,33 @@ jobs:
 
       - name: Build Docker image
         run: |
+          set -e
+
           if [ -n "${{ matrix.target }}" ]; then
-            docker buildx build \
-              --target ${{ matrix.target }} \
-              -t test-${{ matrix.path }}-${{ matrix.target }} \
-              ./${{ matrix.path }}
+            IMAGE=test-${{ matrix.path }}-${{ matrix.target }}
           else
-            docker buildx build \
-              -t test-${{ matrix.path }} \
-              ./${{ matrix.path }}
+            IMAGE=test-${{ matrix.path }}
           fi
+
+          echo "Running container from image: $IMAGE"
+
+          case "${{ matrix.path }}" in
+            web-scraper)
+              docker run -d --name webscraper-${{ matrix.target }} $IMAGE
+              ;;
+            llm)
+              docker run -d --name llm-${{ matrix.target }} $IMAGE
+              ;;
+            differ_module/postgres_api)
+              docker run -d --name postgres-api -p 5011:5011 $IMAGE
+              ;;
+            gui)
+              docker run -d --name gui -p 3000:3000 $IMAGE
+              ;;
+            *)
+              echo "No run configuration for path=${{ matrix.path }}"
+              ;;
+          esac
 
       - name: Run and Log Container
         run: |
@@ -67,6 +84,12 @@ jobs:
             sleep 5
             docker logs gui-container
           fi
+          
+      - name: Check GUI Endpoint
+        if: matrix.path == 'gui'
+        run: |
+          sleep 5
+          curl -f http://localhost:3000 || (echo "GUI did not respond" && exit 1)
 
       - name: Cleanup
         if: always()
