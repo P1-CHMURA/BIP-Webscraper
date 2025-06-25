@@ -21,7 +21,9 @@ jobs:
           - path: llm
             target: worker
           - path: differ_module/postgres_api
+            target: default
           - path: gui
+            target: default
 
     steps:
       - name: Checkout code
@@ -30,64 +32,63 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build Docker image
+      - name: Build Docker Image
         run: |
           set -e
 
-          if [ -n "${{ matrix.target }}" ]; then
-            IMAGE=test-${{ matrix.path }}-${{ matrix.target }}
-          else
+          if [ "${{ matrix.target }}" = "default" ]; then
             IMAGE=test-${{ matrix.path }}
+            docker buildx build -t $IMAGE ./${{ matrix.path }}
+          else
+            IMAGE=test-${{ matrix.path }}-${{ matrix.target }}
+            docker buildx build --target ${{ matrix.target }} -t $IMAGE ./${{ matrix.path }}
           fi
 
-          echo "Running container from image: $IMAGE"
+          echo "Built image: $IMAGE"
+
+      - name: Run Container and Log Output
+        run: |
+          set -e
+
+          if [ "${{ matrix.target }}" = "default" ]; then
+            IMAGE=test-${{ matrix.path }}
+          else
+            IMAGE=test-${{ matrix.path }}-${{ matrix.target }}
+          fi
 
           case "${{ matrix.path }}" in
             web-scraper)
-              docker run -d --name webscraper-${{ matrix.target }} $IMAGE
+              NAME=webscraper-${{ matrix.target }}
               ;;
             llm)
-              docker run -d --name llm-${{ matrix.target }} $IMAGE
+              NAME=llm-${{ matrix.target }}
               ;;
             differ_module/postgres_api)
-              docker run -d --name postgres-api -p 5011:5011 $IMAGE
+              NAME=postgres_api_container
+              PORT="-p 5011:5011"
               ;;
             gui)
-              docker run -d --name gui -p 3000:3000 $IMAGE
+              NAME=gui-container
+              PORT="-p 3000:3000"
               ;;
             *)
-              echo "No run configuration for path=${{ matrix.path }}"
+              NAME=generic-container
               ;;
           esac
 
-      - name: Run and Log Container
-        run: |
-          set -e
+          echo "Running container $NAME from image $IMAGE"
+          docker run -d --name $NAME ${PORT:-} $IMAGE
 
-          if [ "${{ matrix.path }}" == "web-scraper" ]; then
-            docker run -d --name webscraper-${{ matrix.target }} test-${{ matrix.path }}-${{ matrix.target }}
-            sleep 5
-            docker logs webscraper-${{ matrix.target }}
+          echo "Waiting for container $NAME..."
+          sleep 5
 
-          elif [ "${{ matrix.path }}" == "llm" ]; then
-            docker run -d --name llm-${{ matrix.target }} test-${{ matrix.path }}-${{ matrix.target }}
-            sleep 5
-            docker logs llm-${{ matrix.target }}
+          echo "Logs from $NAME:"
+          docker logs $NAME
 
-          elif [ "${{ matrix.path }}" == "differ_module/postgres_api" ]; then
-            docker run -d --name postgres_api_container -p 5011:5011 test-${{ matrix.path }}
-            sleep 5
-            docker logs postgres_api_container
-
-          elif [ "${{ matrix.path }}" == "gui" ]; then
-            docker run -d --name gui-container -p 3000:3000 test-${{ matrix.path }}
-            sleep 5
-            docker logs gui-container
-          fi
-          
       - name: Check GUI Endpoint
         if: matrix.path == 'gui'
         run: |
+          echo "Waiting for GUI to become available..."
           sleep 5
           curl -f http://localhost:3000 || (echo "GUI did not respond" && exit 1)
 
