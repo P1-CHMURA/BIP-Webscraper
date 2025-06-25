@@ -106,6 +106,8 @@ services:
     container_name: db_server
     ports:
       - 5432:5432
+    volumes:
+      - pgdata:/var/lib/postgresql/data
     networks:
       - net_db
     healthcheck:
@@ -164,3 +166,6 @@ networks:
   net_web:
   net_differ:
   net_db:
+
+volumes:
+  pgdata:
