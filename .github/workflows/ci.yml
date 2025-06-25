@@ -25,39 +25,51 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
       - name: Build Docker image
         run: |
-          docker buildx build \
-            --target ${{ matrix.target }} \
-            -t test-${{ matrix.path }}-${{ matrix.target }} \
-            ./${{ matrix.path }}
+          if [ -n "${{ matrix.target }}" ]; then
+            docker buildx build \
+              --target ${{ matrix.target }} \
+              -t test-${{ matrix.path }}-${{ matrix.target }} \
+              ./${{ matrix.path }}
+          else
+            docker buildx build \
+              -t test-${{ matrix.path }} \
+              ./${{ matrix.path }}
+          fi
 
-      - name: Run All Containers
-        run:
-          docker run -d --name webscraper-app test-${{ matrix.path }}-app
-          docker run -d --name webscraper-worker test-${{ matrix.path }}-worker
-          docker run -d --name webscraper-beat test-${{ matrix.path }}-beat
-          docker run -d --name llm-worker test-${{ matrix.path }}-worker
+      - name: Run and Log Container
+        run: |
+          set -e
 
-          docker run -d --name postgres_api_container -p 5011:5011 test-${{ matrix.path }}-postgres_api
+          if [ "${{ matrix.path }}" == "web-scraper" ]; then
+            docker run -d --name webscraper-${{ matrix.target }} test-${{ matrix.path }}-${{ matrix.target }}
+            sleep 5
+            docker logs webscraper-${{ matrix.target }}
 
-          docker run -d --name gui-container -p 3000:3000 test-${{ matrix.path }}-gui
+          elif [ "${{ matrix.path }}" == "llm" ]; then
+            docker run -d --name llm-${{ matrix.target }} test-${{ matrix.path }}-${{ matrix.target }}
+            sleep 5
+            docker logs llm-${{ matrix.target }}
 
-          sleep 10
+          elif [ "${{ matrix.path }}" == "differ_module/postgres_api" ]; then
+            docker run -d --name postgres_api_container -p 5011:5011 test-${{ matrix.path }}
+            sleep 5
+            docker logs postgres_api_container
 
-          docker logs webscraper-app
-          docker logs webscraper-worker
-          docker logs webscraper-beat
-          docker logs llm-worker
-          docker logs postgres_api_container
-          docker logs gui-container
+          elif [ "${{ matrix.path }}" == "gui" ]; then
+            docker run -d --name gui-container -p 3000:3000 test-${{ matrix.path }}
+            sleep 5
+            docker logs gui-container
+          fi
 
-      - name: Cleanup Containers
-        run:
-          docker stop webscraper-app webscraper-worker webscraper-beat llm-worker db-server postgres_api_container gui-container
-          docker rm webscraper-app webscraper-worker webscraper-beat llm-worker db-server postgres_api_container gui-container
+      - name: Cleanup
+        if: always()
+        run: |
+          docker ps -a -q | xargs -r docker stop
+          docker ps -a -q | xargs -r docker rm
