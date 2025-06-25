@@ -32,7 +32,7 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build \
+          docker buildx build \
             --target ${{ matrix.target }} \
             -t test-${{ matrix.path }}-${{ matrix.target }} \
             ./${{ matrix.path }}
