@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify
 from datetime import datetime
+from flask_cors import CORS
 import psycopg2
 
 DB_NAME = "postgres"
@@ -10,7 +11,7 @@ DB_PORT = "5432"
 
 conn = psycopg2.connect(dbname=DB_NAME, user=DB_USER, password=DB_PASSWORD, host=DB_HOST, port=DB_PORT)
 app = Flask(__name__)
-
+CORS(app, origins=["*"])
 @app.route("/sources", methods=["POST"])
 def create_source():
     data = request.get_json()
