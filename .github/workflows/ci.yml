@@ -36,11 +36,14 @@ jobs:
         run: |
           set -e
 
+          # Replace forward slashes with hyphens in image names
+          SAFE_PATH=$(echo "${{ matrix.path }}" | sed 's|/|-|g')
+
           if [ "${{ matrix.target }}" = "default" ]; then
-            IMAGE=test-${{ matrix.path }}
+            IMAGE=test-$SAFE_PATH
             docker buildx build -t $IMAGE ./${{ matrix.path }}
           else
-            IMAGE=test-${{ matrix.path }}-${{ matrix.target }}
+            IMAGE=test-$SAFE_PATH-${{ matrix.target }}
             docker buildx build --target ${{ matrix.target }} -t $IMAGE ./${{ matrix.path }}
           fi
 
@@ -50,10 +53,13 @@ jobs:
         run: |
           set -e
 
+          # Replace forward slashes with hyphens in image names
+          SAFE_PATH=$(echo "${{ matrix.path }}" | sed 's|/|-|g')
+
           if [ "${{ matrix.target }}" = "default" ]; then
-            IMAGE=test-${{ matrix.path }}
+            IMAGE=test-$SAFE_PATH
           else
-            IMAGE=test-${{ matrix.path }}-${{ matrix.target }}
+            IMAGE=test-$SAFE_PATH-${{ matrix.target }}
           fi
 
           case "${{ matrix.path }}" in
