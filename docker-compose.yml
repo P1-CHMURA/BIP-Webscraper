@@ -98,6 +98,7 @@ services:
     networks:
       - net_db
       - net_differ
+      - net_web
 
   db_server:
     build:
@@ -139,7 +140,12 @@ services:
       target: app
     container_name: llm
     volumes:
-      - ./llm:/app
+      - ./llm/main.py:/app/main.py
+      - ./llm/database.py:/app/database.py
+      - ./llm/llm_queue.py:/app/llm_queue.py
+      - ./llm/summarizer.py:/app/summarizer.py
+      - ./llm/tasks.py:/app/tasks.py
+      - ./llm/worker.py:/app/worker.py
     ports:
       - 5020:5020
     networks:
