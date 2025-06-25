@@ -1,0 +1,63 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, test ]
+  pull_request:
+    branches: [ main, test ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - path: web-scraper
+            target: app
+          - path: web-scraper
+            target: worker
+          - path: web-scraper
+            target: beat
+          - path: llm
+            target: worker
+          - path: differ_module/postgres_api
+          - path: gui
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image
+        run: |
+          docker build \
+            --target ${{ matrix.target }} \
+            -t test-${{ matrix.path }}-${{ matrix.target }} \
+            ./${{ matrix.path }}
+
+      - name: Run All Containers
+        run:
+          docker run -d --name webscraper-app test-${{ matrix.path }}-app
+          docker run -d --name webscraper-worker test-${{ matrix.path }}-worker
+          docker run -d --name webscraper-beat test-${{ matrix.path }}-beat
+          docker run -d --name llm-worker test-${{ matrix.path }}-worker
+
+          docker run -d --name postgres_api_container -p 5011:5011 test-${{ matrix.path }}-postgres_api
+
+          docker run -d --name gui-container -p 3000:3000 test-${{ matrix.path }}-gui
+
+          sleep 10
+
+          docker logs webscraper-app
+          docker logs webscraper-worker
+          docker logs webscraper-beat
+          docker logs llm-worker
+          docker logs postgres_api_container
+          docker logs gui-container
+
+      - name: Cleanup Containers
+        run:
+          docker stop webscraper-app webscraper-worker webscraper-beat llm-worker db-server postgres_api_container gui-container
+          docker rm webscraper-app webscraper-worker webscraper-beat llm-worker db-server postgres_api_container gui-container
