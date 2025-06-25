@@ -1,0 +1,66 @@
+@import "tailwindcss";
+
+html, body, #root {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  font-family: sans-serif;
+  background-color: white;
+  color: black;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+header, main, footer {
+  padding: 1rem;
+  border: 1px solid black;
+}
+
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: white;
+  padding: 1rem;
+  border: 1px solid black;
+}
+
+.nav-links {
+  display: flex;
+  gap: 2rem;
+}
+
+.nav-links a {
+  text-decoration: none;
+  color: black;
+  border-bottom: 2px solid transparent;
+  padding-bottom: 4px;
+}
+
+.nav-links a.active {
+  border-bottom: 2px solid black;
+}
+
+main {
+  min-height: calc(100vh - 160px); /* wysokość całego widoku - header i footer */
+  background-color: white;
+}
+
+footer {
+  text-align: center;
+  border-top: 1px solid black;
+  padding: 1rem;
+}
+
+.content-block {
+  border: 1px solid black;
+  padding: 2rem;
+  margin: 2rem auto;
+  background-color: white;
+  color: black;
+  max-width: 100%;
+}
+

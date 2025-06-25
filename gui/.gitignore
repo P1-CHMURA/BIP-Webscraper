@@ -173,7 +173,3 @@ cython_debug/
 .pypirc
 *geany*
 
-*node_modules*
-*package-lock.json*
-
-

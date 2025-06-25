@@ -1,0 +1,8 @@
+docker network create --driver bridge --internal internal_net_differ
+docker network create --driver bridge --internal internal_net_db
+docker network create --driver bridge external_net
+
+
+//test
+curl -X POST "http://localhost:5010/diff_request" -H "Content-Type: application/json" -d "[{\"link-main\": \"https://test.pl\",\"link\": \"test2\",\"content\": \"testowaasd wiadomosc3\",\"typ\": \"pdf\", \"timestamp\": \"jakiś czas\"}]"
+

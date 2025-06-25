@@ -1,0 +1,111 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, test ]
+  pull_request:
+    branches: [ main, test ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - path: web-scraper
+            target: app
+          - path: web-scraper
+            target: worker
+          - path: web-scraper
+            target: beat
+          - path: llm
+            target: worker
+          - path: differ_module/postgres_api
+            target: default
+          - path: gui
+            target: default
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker Image
+        run: |
+          set -e
+
+          # Replace forward slashes with hyphens in image names
+          SAFE_PATH=$(echo "${{ matrix.path }}" | sed 's|/|-|g')
+
+          if [ "${{ matrix.target }}" = "default" ]; then
+            IMAGE=test-$SAFE_PATH
+            echo "Building image $IMAGE from path ./${{ matrix.path }}"
+            docker buildx build -t $IMAGE ./${{ matrix.path }} --load
+          else
+            IMAGE=test-$SAFE_PATH-${{ matrix.target }}
+            echo "Building image $IMAGE from path ./${{ matrix.path }} with target ${{ matrix.target }}"
+            docker buildx build --target ${{ matrix.target }} -t $IMAGE ./${{ matrix.path }} --load
+          fi
+
+          echo "Built image: $IMAGE"
+          
+          # Verify the image was created
+          echo "Verifying image exists:"
+          docker images | grep $IMAGE || (echo "ERROR: Image $IMAGE was not created!" && exit 1)
+
+      - name: Run Container and Log Output
+        run: |
+          set -e
+
+          # Use the same image naming logic as the build step
+          SAFE_PATH=$(echo "${{ matrix.path }}" | sed 's|/|-|g')
+
+          if [ "${{ matrix.target }}" = "default" ]; then
+            IMAGE=test-$SAFE_PATH
+          else
+            IMAGE=test-$SAFE_PATH-${{ matrix.target }}
+          fi
+
+          case "${{ matrix.path }}" in
+            web-scraper)
+              NAME=webscraper-${{ matrix.target }}
+              ;;
+            llm)
+              NAME=llm-${{ matrix.target }}
+              ;;
+            differ_module/postgres_api)
+              NAME=postgres_api_container
+              PORT="-p 5011:5011"
+              ;;
+            gui)
+              NAME=gui-container
+              PORT="-p 3000:3000"
+              ;;
+            *)
+              NAME=generic-container
+              ;;
+          esac
+
+          echo "Running container $NAME from image $IMAGE"
+          docker run -d --name $NAME ${PORT:-} $IMAGE
+
+          echo "Waiting for container $NAME..."
+          sleep 5
+
+          echo "Logs from $NAME:"
+          docker logs $NAME
+
+      - name: Check GUI Endpoint
+        if: matrix.path == 'gui'
+        run: |
+          echo "Waiting for GUI to become available..."
+          sleep 5
+          curl -f http://localhost:3000 || (echo "GUI did not respond" && exit 1)
+
+      - name: Cleanup
+        if: always()
+        run: |
+          docker ps -a -q | xargs -r docker stop
+          docker ps -a -q | xargs -r docker rm
